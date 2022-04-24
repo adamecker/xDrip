@@ -14,6 +14,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 import static com.eveningoutpost.dexdrip.Models.Treatments.pushTreatmentSyncToWatch;
@@ -30,6 +31,10 @@ public class NightscoutTreatments {
 
     public static boolean processTreatmentResponse(final String response) throws Exception {
         boolean new_data = false;
+
+        // Hacky way to track remote deletions - we assume if any of the last 10 treatments are not
+        // present in the response then they were deleted.
+        List<Treatments> latestTreatments = Treatments.latest(10);
 
         final JSONArray jsonArray = new JSONArray(response);
         for (int i = 0; i < jsonArray.length(); i++) {
@@ -195,6 +200,17 @@ public class NightscoutTreatments {
                                     pushTreatmentSyncToWatch(existing, false);
                                 new_data = true;
                             }
+
+                            // Remove any found treatments from latestTreatments list
+                            if (latestTreatments != null) {
+                                Treatments found = null;
+                                for (Treatments t : latestTreatments) {
+                                    if (t.uuid.equals(nightscout_id)) {
+                                        found = t;
+                                    }
+                                }
+                                if (found != null) latestTreatments.remove(found);
+                            }
                         } else {
                             UserError.Log.d(TAG, "Skipping record creation as original source is xDrip");
                         }
@@ -202,6 +218,15 @@ public class NightscoutTreatments {
                 }
             }
         }
+
+        // If we still have latestTreatments that weren't in the response, we assume they were deleted remotely
+        if (latestTreatments != null) {
+            for (Treatments t : latestTreatments) {
+                UserError.Log.d(TAG, "Assuming treatment was deleted: " + t.toS());
+                Treatments.delete_by_uuid(t.uuid);
+            }
+        }
+
         return new_data;
     }
 }
