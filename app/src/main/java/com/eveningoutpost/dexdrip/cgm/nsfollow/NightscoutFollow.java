@@ -7,6 +7,7 @@ import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
 import com.eveningoutpost.dexdrip.utilitymodels.Constants;
+import com.eveningoutpost.dexdrip.utilitymodels.LoopIob;
 import com.eveningoutpost.dexdrip.utilitymodels.NightscoutTreatments;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.PumpStatus;
@@ -175,6 +176,10 @@ public class NightscoutFollow {
 
         if (ds.pump != null && ds.pump.reservoir != null) {
             PumpStatus.setReservoir(ds.pump.reservoir);
+        }
+
+        if (ds.openaps != null && ds.openaps.iob != null && ds.openaps.iob.iob != null) {
+            LoopIob.setIob(ds.openaps.iob.iob, System.currentTimeMillis());
         }
 
         NightscoutFollowService.updateUploaderStatus(uploaderBat, ds.isCharging);

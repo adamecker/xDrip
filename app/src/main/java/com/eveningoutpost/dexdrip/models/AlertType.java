@@ -13,6 +13,7 @@ import com.activeandroid.annotation.Table;
 import com.activeandroid.query.Select;
 import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
 import com.eveningoutpost.dexdrip.utilitymodels.AlertPlayer;
+import com.eveningoutpost.dexdrip.utilitymodels.LoopIob;
 import com.eveningoutpost.dexdrip.utilitymodels.Notifications;
 
 import java.util.ArrayList;
@@ -188,6 +189,33 @@ public class AlertType extends Model {
         return alert; // allow
     }
 
+    // IOB gate for low alerts: suppress the low alert when the loop reports IOB
+    // at or below the user's threshold (a low with no insulin on board is less
+    // urgent). Fail-safe: if IOB is missing or stale the alert is allowed.
+    // Called from the low-alert branch only, never for high alerts.
+    private static AlertType filter_alert_on_iob(AlertType alert, SharedPreferences prefs)
+    {
+        if (alert == null) return null;
+        if (prefs.getBoolean("low_alert_iob_gate", false)) {
+            final Double iob = LoopIob.getFreshIob(15 * 60 * 1000L);
+            if (iob != null) {
+                final double threshold;
+                try {
+                    threshold = Double.parseDouble(prefs.getString("low_alert_iob_threshold", "0"));
+                } catch (NumberFormatException e) {
+                    Log.e(TAG_ALERT, "Invalid IOB threshold preference, allowing low alert");
+                    return alert; // allow
+                }
+                if (iob <= threshold) {
+                    Log.i(TAG_ALERT, "Suppressing low alert: loop IOB " + iob + " U <= threshold " + threshold + " U");
+                    return null; // suppress
+                }
+            }
+            // iob == null (missing or stale) -> fail-safe: allow the alert
+        }
+        return alert; // allow
+    }
+
     // bg_minute is the estimatin of the bg change rate
     private static AlertType get_highest_active_alert_helper(double bg, SharedPreferences prefs) {
         // Chcek the low alerts
@@ -207,7 +235,7 @@ public class AlertType extends Model {
 
             for (AlertType lowAlert : lowAlerts) {
                 if(lowAlert.should_alarm(bg-offset)) {
-                    return filter_alert_on_stale(lowAlert,prefs);
+                    return filter_alert_on_iob(filter_alert_on_stale(lowAlert,prefs),prefs);
                 }
             }
         }

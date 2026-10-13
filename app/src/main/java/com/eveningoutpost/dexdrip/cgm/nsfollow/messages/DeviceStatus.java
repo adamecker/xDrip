@@ -28,6 +28,9 @@ public class DeviceStatus {
     @Expose
     public Pump pump;
 
+    @Expose
+    public OpenAps openaps;
+
     public static class Uploader {
 
         @Expose
@@ -46,6 +49,18 @@ public class DeviceStatus {
 
             @Expose
             public Integer percent;
+        }
+    }
+
+    public static class OpenAps {
+
+        @Expose
+        public Iob iob;
+
+        public static class Iob {
+
+            @Expose
+            public Double iob;
         }
     }
 }

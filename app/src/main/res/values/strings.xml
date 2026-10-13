@@ -456,6 +456,9 @@
     <string name="choose_sound_used_for_persistent_high_alarm">Choose the sound used for the alarm.</string>
     <string name="persistent_high_sound">Alert Sound</string>
     <string name="forecast_lows">Forecast Lows</string>
+    <string name="low_alert_iob_gate_title">Only alarm low BG if IOB above threshold</string>
+    <string name="low_alert_iob_gate_summary">Suppress low alarms when the loop reports IOB at or below the threshold. Alarms always fire if IOB is unknown. High alarms are unaffected.</string>
+    <string name="low_alert_iob_threshold_title">IOB threshold (U)</string>
     <string name="raise_alarm_on_forecast_low">Raise alarm on Forecast Low</string>
     <string name="notify_when_predicted_low_time_reaches_threshold">Notify when forecasted low time reaches time threshold</string>
     <string name="predicted_low_sound">Alert Sound</string>
